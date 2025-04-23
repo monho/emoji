@@ -2,32 +2,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-class MainPage extends StatefulWidget {
+class MainPage extends StatelessWidget {
   const MainPage({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
-}
-
-class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin {
-  late final AnimationController _earthController;
-  final random = Random();
-  final int nearByPeople = 5;
-
-  @override
-  void initState() {
-    super.initState();
-    _earthController = AnimationController(vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _earthController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final random = Random();
+    final int nearByPeople = 5; // List<User> 길이
+
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
@@ -40,18 +22,6 @@ class _MainPageState extends State<MainPage> with SingleTickerProviderStateMixin
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Transform.scale(
-                  scale: 1.8,
-                  child: Lottie.asset(
-                    'assets/lottie/earth.json',
-                    controller: _earthController,
-                    onLoaded: (composition) {
-                      _earthController
-                        ..duration = composition.duration * 2 // 2배 느리게
-                        ..repeat();
-                    },
-                  ),
-                ),
                 ...List.generate(nearByPeople, (index) {
                   double xPos = random.nextInt(260) + 70;
                   double yPos = random.nextInt(220) + 230;
