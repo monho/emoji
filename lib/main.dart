@@ -1,4 +1,4 @@
-import 'package:emoji/main/main_page.dart';
+import 'package:emoji/view/main/main_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
