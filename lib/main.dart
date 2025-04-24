@@ -1,4 +1,6 @@
+
 import 'package:emoji/view/chatroom/chatroom_view.dart';
+import 'package:emoji/view/main/main_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
