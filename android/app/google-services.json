@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "43042287657",
+    "project_id": "emoji-2fd13",
+    "storage_bucket": "emoji-2fd13.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43042287657:android:e6efaf4074404a7a562c38",
+        "android_client_info": {
+          "package_name": "com.example.emoji"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZAPRL1c6lXIDKfIbPFmtpT5-E3MBFetM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
