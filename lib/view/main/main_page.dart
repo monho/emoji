@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -11,10 +12,29 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   bool matching = false; // 예시 데이터 (firebase와 연동 예정)
+  Timer? timer;
+  int time = 30;
 
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    void startTimer() {
+      time = 30;
+      if (matching == false) {
+        return;
+      }
+      timer = Timer.periodic(Duration(seconds: 1), (t) {
+        setState(() {
+          if (time <= 0) {
+            timer?.cancel();
+            matching = false;
+          } else {
+            time--;
+          }
+        });
+      });
+    }
 
     /// 미터 단위 포맷해주는 함수 ex) 1000 -> 1km, 600 -> 600m
     String formatDistance(int meters) {
@@ -63,14 +83,17 @@ class _MainPageState extends State<MainPage> {
     ).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: !matching ? Colors.white : Colors.black,
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Spacer(),
           Text(
-            matching == true ? '매칭 중...' :'동네 친구 찾는 중...',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            !matching ? '동네 친구 찾는 중...' : '상대방을 찾는 중'+'.' * (time%3+1),
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: !matching ? Colors.black : Colors.white,
+            ),
           ),
           SizedBox(height: 20),
           SizedBox.square(
@@ -107,6 +130,7 @@ class _MainPageState extends State<MainPage> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
+                            color: !matching ? Colors.black : Colors.white,
                           ),
                         ),
                       ],
@@ -122,11 +146,13 @@ class _MainPageState extends State<MainPage> {
             child: ElevatedButton(
               onPressed: () {
                 setState(() {
+                  timer?.cancel();
                   matching = !matching;
+                  startTimer();
                 });
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: matching == true ? Colors.red : Colors.blue,
+                backgroundColor: !matching ? Colors.blue : Colors.red,
                 foregroundColor: Colors.white,
                 minimumSize: Size.fromHeight(50),
                 shape: RoundedRectangleBorder(
@@ -134,7 +160,7 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
               child: Text(
-                matching == true ? '매칭 취소 ' : '랜덤 채팅 시작',
+                !matching ? '랜덤 채팅 시작' : '매칭 취소 ${time}',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
