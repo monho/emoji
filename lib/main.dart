@@ -1,3 +1,5 @@
+
+import 'package:emoji/view/chatroom/chatroom_view.dart';
 import 'package:emoji/view/main/main_page.dart';
 import 'package:flutter/material.dart';
 
@@ -11,7 +13,13 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: MainPage(),
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: ChatRoomView()
+        ),
+      ),
     );
   }
 }
