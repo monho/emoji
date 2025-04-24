@@ -9,8 +9,18 @@ class MainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
+    /// 미터 단위 포맷해주는 함수 ex) 1000 -> 1km, 600 -> 600m
+    String formatDistance(int meters) {
+      if (meters >= 1000) {
+        double km = meters / 1000;
+        return '${km.toStringAsFixed(1)}km';
+      } else {
+        return '${meters.toStringAsFixed(0)}m';
+      }
+    }
+
     //
-    // 예시 데이터
+    // 예시 데이터 (나중에 firebase와 연동)
     double myLat = 37.56104;
     double myLon = 126.9257;
     List<Map<String, dynamic>> peoplePositions = [
@@ -22,16 +32,6 @@ class MainPage extends StatelessWidget {
     ];
     //
     //
-
-    /// 미터 단위 포맷해주는 함수 ex) 1000 -> 1km, 600 -> 600m
-    String formatDistance(int meters) {
-      if (meters >= 1000) {
-        double km = meters / 1000;
-        return '${km.toStringAsFixed(1)}km';
-      } else {
-        return '${meters.toStringAsFixed(0)}m';
-      }
-    }
 
     final int nearByPeople = peoplePositions.length; // 같은 동네 사람 수
 
@@ -80,8 +80,8 @@ class MainPage extends StatelessWidget {
                   child: Lottie.asset('assets/lottie/emoji.json'),
                 ),
                 ...List.generate(nearByPeople, (index) {
-                  // 중심 x 186, y186 기준
-                  double xPos =
+                  // 중심 x 186, y186 기준 (393/2 - ㅈ)
+                  double xPos =                           // 배율 나중에 조정해야함!
                       (myLat - peoplePositions[index]['lat']) * 10000 + 186;
                   double yPos =
                       (myLon - peoplePositions[index]['lon']) * 10000 + 186;
