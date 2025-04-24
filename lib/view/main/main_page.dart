@@ -12,14 +12,14 @@ class MainPage extends StatelessWidget {
 
     //
     // 예시 데이터
-    double myLat = 37.5034138;
-    double myLon = 126.7660309;
+    double myLat = 37.56104;
+    double myLon = 126.9257;
     List<Map<String, dynamic>> peoplePositions = [
-      {'lat': 37.5665, 'lon': 126.9780, 'name': '서울'}, // 서울시청
-      {'lat': 35.1587, 'lon': 129.0551, 'name': '부산'}, // 광안리 해수욕장
-      {'lat': 35.8714, 'lon': 128.6014, 'name': '대구'}, // 대구시청
-      {'lat': 35.1595, 'lon': 126.8526, 'name': '광주'}, // 광주광역시청
-      {'lat': 33.5115, 'lon': 126.4927, 'name': '제주'}, // 제주국제공항
+      {'lat': 37.5450, 'lon': 126.9258, 'name': '1'},
+      {'lat': 37.5736, 'lon': 126.9262, 'name': '2'},
+      {'lat': 37.5694, 'lon': 126.9251, 'name': '3'},
+      {'lat': 37.5559, 'lon': 126.9249, 'name': '4'},
+      {'lat': 37.5633, 'lon': 126.9265, 'name': '5'},
     ];
     //
     //
@@ -45,28 +45,42 @@ class MainPage extends StatelessWidget {
         return calculateDistance(myLat, myLon, e['lat'], e['lon']);
       },
     ).toList();
-    print(distance);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: double.infinity,
-            height: 700,
+          Spacer(),
+          Text(
+            '동네 사람 찾는 중...',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
+          SizedBox.square(
+            dimension: MediaQuery.of(context).size.width, // 393
             child: Stack(
               alignment: Alignment.center,
               children: [
                 ...List.generate(nearByPeople, (index) {
-                  double xPos = random.nextInt(260) + 70;
-                  double yPos = random.nextInt(220) + 230;
+                  // x 186, y186 기준
+
+                  double xPos =
+                      (myLat - peoplePositions[index]['lat']) * 10000 + 186;
+                  double yPos =
+                      (myLon - peoplePositions[index]['lon']) * 10000 + 186;
                   return Positioned(
                     left: xPos,
                     top: yPos,
-                    child: Image.asset(
-                      'assets/image/question_mark.png',
-                      width: 20,
-                      height: 20,
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          'assets/image/question_mark.png',
+                          width: 20,
+                          height: 20,
+                        ),
+                        Text('${distance[index]} m'),
+                      ],
                     ),
                   );
                 }),
@@ -81,8 +95,9 @@ class MainPage extends StatelessWidget {
               ],
             ),
           ),
+          Spacer(),
           Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPadding + 20),
+            padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPadding + 50),
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
