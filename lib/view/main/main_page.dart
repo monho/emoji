@@ -88,7 +88,7 @@ class _MainPageState extends State<MainPage> {
         children: [
           Spacer(),
           Text(
-            !matching ? '동네 친구 찾는 중...' : '상대방을 찾는 중'+'.' * (time%3+1),
+            !matching ? '동네 친구 찾는 중...' : '상대방을 찾는 중${'.' * (time%3+1)}',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -160,7 +160,7 @@ class _MainPageState extends State<MainPage> {
                 ),
               ),
               child: Text(
-                !matching ? '랜덤 채팅 시작' : '매칭 취소 ${time}',
+                !matching ? '랜덤 채팅 시작' : '매칭 취소 $time',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
