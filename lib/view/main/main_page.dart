@@ -7,7 +7,6 @@ class MainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final random = Random();
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     //
@@ -15,14 +14,24 @@ class MainPage extends StatelessWidget {
     double myLat = 37.56104;
     double myLon = 126.9257;
     List<Map<String, dynamic>> peoplePositions = [
-      {'lat': 37.5450, 'lon': 126.9258, 'name': '1'},
-      {'lat': 37.5736, 'lon': 126.9262, 'name': '2'},
-      {'lat': 37.5694, 'lon': 126.9251, 'name': '3'},
-      {'lat': 37.5559, 'lon': 126.9249, 'name': '4'},
-      {'lat': 37.5633, 'lon': 126.9265, 'name': '5'},
+      {'lat': 37.5450, 'lon': 126.9328, 'name': '1'},
+      {'lat': 37.5736, 'lon': 126.9162, 'name': '2'},
+      {'lat': 37.5694, 'lon': 126.9361, 'name': '3'},
+      {'lat': 37.5559, 'lon': 126.9149, 'name': '4'},
+      {'lat': 37.5553, 'lon': 126.9265, 'name': '5'},
     ];
     //
     //
+
+    /// 미터 단위 포맷해주는 함수 ex) 1000 -> 1km, 600 -> 600m
+    String formatDistance(int meters) {
+      if (meters >= 1000) {
+        double km = meters / 1000;
+        return '${km.toStringAsFixed(1)}km';
+      } else {
+        return '${meters.toStringAsFixed(0)}m';
+      }
+    }
 
     final int nearByPeople = peoplePositions.length; // 같은 동네 사람 수
 
@@ -62,9 +71,16 @@ class MainPage extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
+                Transform.scale(
+                  scale: 2.8,
+                  child: Lottie.asset('assets/lottie/radar.json'),
+                ),
+                Transform.scale(
+                  scale: 0.3,
+                  child: Lottie.asset('assets/lottie/emoji.json'),
+                ),
                 ...List.generate(nearByPeople, (index) {
-                  // x 186, y186 기준
-
+                  // 중심 x 186, y186 기준
                   double xPos =
                       (myLat - peoplePositions[index]['lat']) * 10000 + 186;
                   double yPos =
@@ -79,19 +95,17 @@ class MainPage extends StatelessWidget {
                           width: 20,
                           height: 20,
                         ),
-                        Text('${distance[index]} m'),
+                        Text(
+                          formatDistance(distance[index]),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   );
                 }),
-                Transform.scale(
-                  scale: 2.8,
-                  child: Lottie.asset('assets/lottie/radar.json'),
-                ),
-                Transform.scale(
-                  scale: 0.3,
-                  child: Lottie.asset('assets/lottie/emoji.json'),
-                ),
               ],
             ),
           ),
