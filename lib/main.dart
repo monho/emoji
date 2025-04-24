@@ -1,4 +1,5 @@
 import 'package:emoji/view/main/main_page.dart';
+import 'package:emoji/view/splash/splash_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -11,7 +12,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: MainPage(),
+      home: SplashScreen(),
     );
   }
 }
