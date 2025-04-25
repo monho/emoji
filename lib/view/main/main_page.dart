@@ -1,13 +1,40 @@
 import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
-class MainPage extends StatelessWidget {
+class MainPage extends StatefulWidget {
   const MainPage({super.key});
+
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  bool matching = false; // 예시 데이터 (firebase와 연동 예정)
+  Timer? timer;
+  int time = 30;
 
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    void startTimer() {
+      time = 30;
+      if (matching == false) {
+        return;
+      }
+      timer = Timer.periodic(Duration(seconds: 1), (t) {
+        setState(() {
+          if (time <= 0) {
+            timer?.cancel();
+            matching = false;
+          } else {
+            time--;
+          }
+        });
+      });
+    }
 
     /// 미터 단위 포맷해주는 함수 ex) 1000 -> 1km, 600 -> 600m
     String formatDistance(int meters) {
@@ -56,14 +83,17 @@ class MainPage extends StatelessWidget {
     ).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: !matching ? Colors.white : Colors.black,
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Spacer(),
           Text(
-            '동네 사람 찾는 중...',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            !matching ? '동네 친구 찾는 중...' : '상대방을 찾는 중${'.' * (time%3+1)}',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: !matching ? Colors.black : Colors.white,
+            ),
           ),
           SizedBox(height: 20),
           SizedBox.square(
@@ -81,7 +111,7 @@ class MainPage extends StatelessWidget {
                 ),
                 ...List.generate(nearByPeople, (index) {
                   // 중심 x 186, y186 기준 (393/2 - ㅈ)
-                  double xPos =                           // 배율 나중에 조정해야함!
+                  double xPos = // 배율 나중에 조정해야함!
                       (myLat - peoplePositions[index]['lat']) * 10000 + 186;
                   double yPos =
                       (myLon - peoplePositions[index]['lon']) * 10000 + 186;
@@ -100,6 +130,7 @@ class MainPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
+                            color: !matching ? Colors.black : Colors.white,
                           ),
                         ),
                       ],
@@ -113,9 +144,15 @@ class MainPage extends StatelessWidget {
           Padding(
             padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPadding + 50),
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                setState(() {
+                  timer?.cancel();
+                  matching = !matching;
+                  startTimer();
+                });
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: !matching ? Colors.blue : Colors.red,
                 foregroundColor: Colors.white,
                 minimumSize: Size.fromHeight(50),
                 shape: RoundedRectangleBorder(
@@ -123,7 +160,7 @@ class MainPage extends StatelessWidget {
                 ),
               ),
               child: Text(
-                '랜덤 채팅 시작',
+                !matching ? '랜덤 채팅 시작' : '매칭 취소 $time',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
