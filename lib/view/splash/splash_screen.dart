@@ -1,5 +1,7 @@
-import 'package:emoji/terms/terms_screen.dart'; // 경로 주의!
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:emoji/terms/terms_screen.dart';
+import 'package:emoji/view/main/main_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,18 +14,35 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(seconds: 2), () {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-        return TermsAgreementPage(); // 스플래시 → 약관 페이지로 이동
-      }));
-    });
+    _navigateAfterDelay();
+  }
+
+  Future<void> _navigateAfterDelay() async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    final prefs = await SharedPreferences.getInstance();
+    final hasAgreed = prefs.getBool('agreed_terms') ?? false;
+
+    if (!mounted) return;
+
+    if (hasAgreed) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainPage()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const TermsAgreementPage()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: Colors.black,
-      body: const Center(
+      body: Center(
         child: Text(
           'Emoji',
           style: TextStyle(
