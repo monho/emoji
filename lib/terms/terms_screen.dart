@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:emoji/view/main/main_page.dart';
+import 'package:emoji/view/main/main_page.dart';//나중에 메인페이지 대신 프로필 페이지로 변경
 
 class TermsAgreementPage extends StatefulWidget {
   const TermsAgreementPage({super.key});
@@ -31,7 +31,7 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
     if (alreadyAgreed && mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainPage()),
+        MaterialPageRoute(builder: (_) => const MainPage()),//나중에 메인페이지 대신 프로필페이지로 변경
       );
     }
   }
@@ -227,7 +227,7 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
                         if (!mounted) return;
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => const MainPage()),
+                          MaterialPageRoute(builder: (_) => const MainPage()),//나중에 메인페이지 대신 프로필 페이지로 변경
                         );
                       }
                     : null,
