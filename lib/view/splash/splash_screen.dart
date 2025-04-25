@@ -1,4 +1,4 @@
-import 'package:emoji/view/main/main_page.dart';
+import 'package:emoji/terms/terms_screen.dart'; // 경로 주의!
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Future.delayed(Duration(seconds: 2), () {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
-        return MainPage();
+        return TermsAgreementPage(); // 스플래시 → 약관 페이지로 이동
       }));
     });
   }
