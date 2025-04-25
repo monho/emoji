@@ -1,4 +1,7 @@
+import 'package:emoji/viewmodel/chatroom/chatroom_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatRoomView extends StatefulWidget {
   const ChatRoomView({super.key});
@@ -8,16 +11,17 @@ class ChatRoomView extends StatefulWidget {
 }
 
 class _ChatRoomViewState extends State<ChatRoomView> {
-  final scrollController = ScrollController();
   final textEditingController = TextEditingController();
-  final List<String> chatList = [];
+  final scrollController = ScrollController();
 
-  void addMessage(String text) {
-    if (text.trim().isEmpty) return;
-    setState(() {
-      chatList.add(text);
-    });
+  @override
+  void dispose() {
+    textEditingController.dispose();
+    scrollController.dispose();
+    super.dispose();
+  }
 
+  void scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (scrollController.hasClients) {
         scrollController.animateTo(
@@ -27,34 +31,21 @@ class _ChatRoomViewState extends State<ChatRoomView> {
         );
       }
     });
-
-    textEditingController.clear();
-  }
-
-  @override
-  void dispose() {
-    scrollController.dispose();
-    textEditingController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = Provider.of<ChatViewModel>(context);
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+
+    // 새 메시지 수신 시 자동 스크롤
+    WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
+
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Chat'),
         centerTitle: true,
         backgroundColor: const Color.fromRGBO(232, 238, 242, 1),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              '새로운 채팅',
-              style: TextStyle(color: Color.fromRGBO(124, 124, 124, 1)),
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -64,30 +55,39 @@ class _ChatRoomViewState extends State<ChatRoomView> {
               child: Container(
                 color: Colors.white,
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  child: ListView.builder(
                     controller: scrollController,
-                    reverse: false,
-                    itemCount: chatList.length,
+                    itemCount: viewModel.messages.length,
                     itemBuilder: (context, index) {
-                      final message = chatList[index];
+                      final msg = viewModel.messages[index];
+                      final isMe = msg.senderId == currentUserId;
+
                       return Align(
-                        alignment: Alignment.centerRight,
+                        alignment:
+                            isMe ? Alignment.centerRight : Alignment.centerLeft,
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
+                              vertical: 4, horizontal: 8),
                           decoration: BoxDecoration(
-                            color: const Color.fromRGBO(191, 223, 255, 1),
-                            borderRadius: BorderRadius.circular(12),
+                            color: isMe
+                                ? const Color.fromRGBO(191, 223, 255, 1)
+                                : const Color.fromRGBO(230, 230, 230, 1),
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(12),
+                              topRight: const Radius.circular(12),
+                              bottomLeft: isMe
+                                  ? const Radius.circular(12)
+                                  : Radius.zero,
+                              bottomRight:
+                                  isMe ? Radius.zero : const Radius.circular(12),
+                            ),
                           ),
-                          child: Text(message),
+                          child: Text(msg.content),
                         ),
                       );
                     },
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                   ),
                 ),
               ),
@@ -99,44 +99,34 @@ class _ChatRoomViewState extends State<ChatRoomView> {
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: textEditingController,
-                          decoration: const InputDecoration(
-                            hintText: '메시지를 입력하세요',
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 10),
-                          ),
-                          onSubmitted: addMessage,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: textEditingController,
+                        decoration: const InputDecoration(
+                          hintText: '메시지를 입력하세요',
+                          border: InputBorder.none,
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.emoji_emotions_outlined,
-                        ), // 😊 ← 이거!
-                        onPressed: () {
-                          // TODO: 이모지 선택 창 띄우기
+                        onSubmitted: (text) {
+                          if (text.trim().isEmpty) return;
+                          viewModel.sendMessage(currentUserId, text.trim());
+                          textEditingController.clear();
+                          scrollToBottom(); // ✅ 보낸 후 스크롤
                         },
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        onPressed: () => addMessage(textEditingController.text),
-                      ),
-                    ],
-                  ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: () {
+                        final text = textEditingController.text.trim();
+                        if (text.isEmpty) return;
+                        viewModel.sendMessage(currentUserId, text);
+                        textEditingController.clear();
+                        scrollToBottom(); // ✅ 보낸 후 스크롤
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),

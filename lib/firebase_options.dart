@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'emoji-2fd13.firebasestorage.app',
     measurementId: 'G-31GGHTS3NG',
   );
+
 }

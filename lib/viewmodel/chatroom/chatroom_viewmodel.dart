@@ -1,33 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emoji/model/chatroom/chatroom_model.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 class ChatViewModel extends ChangeNotifier {
   final String roomId;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  List<ChatMessage> messages = [];
+  List<ChatMessage> _messages = [];
+  List<ChatMessage> get messages => _messages;
 
-  ChatViewModel(this.roomId) {
+  ChatViewModel({required this.roomId}) {
     listenToMessages();
   }
 
   void listenToMessages() {
     firestore
-      .collection('chatRooms')
-      .doc(roomId)
-      .collection('messages')
-      .orderBy('sentAt')
-      .snapshots()
-      .listen((snapshot) {
-        messages = snapshot.docs
-            .map((doc) => ChatMessage.fromMap(doc.data()))
-            .toList();
-        notifyListeners();
-      });
+        .collection('chatRooms')
+        .doc(roomId)
+        .collection('messages')
+        .orderBy('sentAt', descending: false)
+        .snapshots()
+        .listen((snapshot) {
+      _messages =
+          snapshot.docs.map((doc) => ChatMessage.fromMap(doc.data())).toList();
+      notifyListeners();
+    });
   }
 
   Future<void> sendMessage(String senderId, String content) async {
+    print('🔍 roomId: $roomId');
     final message = ChatMessage(
       senderId: senderId,
       content: content,
@@ -40,10 +41,9 @@ class ChatViewModel extends ChangeNotifier {
         .collection('messages')
         .add(message.toMap());
 
-    // lastMessage 업데이트
-    await firestore.collection('chatRooms').doc(roomId).update({
+    await firestore.collection('chatRooms').doc(roomId).set({
       'lastMessage': content,
-      'lastMessageTime': DateTime.now(),
-    });
+      'lastMessageTime': Timestamp.now(),
+    }, SetOptions(merge: true));
   }
 }

@@ -24,7 +24,7 @@ class ChatMessage {
     return {
       'senderId': senderId,
       'content': content,
-      'sentAt': sentAt,
+      'sentAt': Timestamp.fromDate(sentAt), 
     };
   }
 }
