@@ -17,6 +17,25 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
 
   final Color primaryBlue = const Color(0xFF004FFF);
 
+  @override
+  void initState() {
+    super.initState();
+    _checkAlreadyAgreed(); //이미 약관 동의했는지 확인
+  }
+
+  //약관 동의 여부 확인 → true면 MainPage로 이동
+  Future<void> _checkAlreadyAgreed() async {
+    final prefs = await SharedPreferences.getInstance();
+    final alreadyAgreed = prefs.getBool('agreed_terms') ?? false;
+
+    if (alreadyAgreed && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainPage()),
+      );
+    }
+  }
+
   void updateAll(bool? value) {
     setState(() {
       allChecked = value ?? false;
@@ -62,7 +81,11 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
   }
 
   Widget buildTermTile(
-      String label, bool value, Function(bool?) onChanged, VoidCallback onTapDetail) {
+    String label,
+    bool value,
+    Function(bool?) onChanged,
+    VoidCallback onTapDetail,
+  ) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: Checkbox(
@@ -197,6 +220,7 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
               child: ElevatedButton(
                 onPressed: (term1 && term2 && term3)
                     ? () async {
+                        //동의 후 SharedPreferences에 저장
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.setBool('agreed_terms', true);
 

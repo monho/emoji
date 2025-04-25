@@ -14,28 +14,24 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateAfterDelay();
-  }
+    Future.delayed(const Duration(seconds: 2), () async {
+      final prefs = await SharedPreferences.getInstance();
+      final agreed = prefs.getBool('agreed_to_terms') ?? false;
 
-  Future<void> _navigateAfterDelay() async {
-    await Future.delayed(const Duration(seconds: 2));
+      if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final hasAgreed = prefs.getBool('agreed_terms') ?? false;
-
-    if (!mounted) return;
-
-    if (hasAgreed) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainPage()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const TermsAgreementPage()),
-      );
-    }
+      if (agreed) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainPage()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const TermsAgreementPage()),
+        );
+      }
+    });
   }
 
   @override
