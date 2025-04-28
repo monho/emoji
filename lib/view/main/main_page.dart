@@ -68,6 +68,7 @@ class _MainPageState extends ConsumerState<MainPage> {
           if (time <= 0) {
             matchingTimer?.cancel();
             matching = false;
+            mainVm.removeWaiting(myData!);
           } else {
             time--;
           }

@@ -26,7 +26,7 @@ class MainViewModel extends Notifier<List<User>?> {
     print('addUser');
     final firestore = FirebaseFirestore.instance;
     final collectionRef = firestore.collection('users');
-    final documentRef = collectionRef.doc();
+    final documentRef = collectionRef.doc(user.uid); // 문서이름을 uid로 생성
     await documentRef.set(user.toMap());
   }
 

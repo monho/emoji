@@ -1,4 +1,5 @@
 import 'package:emoji/firebase_options.dart';
+import 'package:emoji/view/chatroom/chatroom_view.dart';
 import 'package:emoji/view/main/main_page.dart';
 import 'package:emoji/view/registration/profile_setup_page.dart';
 import 'package:emoji/view/splash/splash_screen.dart';

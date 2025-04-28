@@ -2,13 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatMessage {
   final String senderId;
-  final String content;
+  final String? text;
+  final String? stickerUrl;
   final DateTime sentAt;
-  final String type;
+  final String type; // text / sticker / mixed
 
   ChatMessage({
     required this.senderId,
-    required this.content,
+    this.text,
+    this.stickerUrl,
     required this.sentAt,
     required this.type,
   });
@@ -16,7 +18,8 @@ class ChatMessage {
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
     return ChatMessage(
       senderId: map['senderId'],
-      content: map['content'],
+      text: map['text'],
+      stickerUrl: map['stickerUrl'],
       sentAt: (map['sentAt'] as Timestamp).toDate(),
       type: map['type'] ?? 'text',
     );
@@ -25,7 +28,8 @@ class ChatMessage {
   Map<String, dynamic> toMap() {
     return {
       'senderId': senderId,
-      'content': content,
+      'text': text,
+      'stickerUrl': stickerUrl,
       'sentAt': Timestamp.fromDate(sentAt),
       'type': type,
     };

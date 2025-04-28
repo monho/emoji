@@ -14,6 +14,7 @@ class ChatRoomView extends ConsumerStatefulWidget {
 class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
   final textEditingController = TextEditingController();
   final scrollController = ScrollController();
+  int selectedGroupIndex = 0; // ✅ 현재 선택된 그룹
 
   @override
   void dispose() {
@@ -34,10 +35,103 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
     });
   }
 
+  Future<void> openEmojiPicker(BuildContext context) async {
+    final viewModelNotifier =
+        ref.read(chatViewModelProvider(widget.roomId).notifier);
+    await viewModelNotifier.loadStickers(selectedGroupIndex); // 초기 그룹 불러오기
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return StatefulBuilder(
+          // ✅ 추가
+          builder: (context, setState) {
+            final viewModel = ref.watch(chatViewModelProvider(widget.roomId));
+            final viewModelNotifier =
+                ref.read(chatViewModelProvider(widget.roomId).notifier);
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ✅ 스티커 그룹 탭
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(viewModelNotifier.groupIcons.length,
+                        (index) {
+                      final iconUrl = viewModelNotifier.groupIcons[index];
+                      final isSelected = selectedGroupIndex == index;
+
+                      return GestureDetector(
+                        onTap: () async {
+                          setState(() {
+                            selectedGroupIndex = index; // ✅ 여기 setState로 갱신
+                          });
+                          await viewModelNotifier
+                              .loadStickers(index); // ✅ 스티커 재로딩
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 8),
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.blueAccent.withOpacity(0.3)
+                                : null,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Image.asset(
+                            iconUrl,
+                            width: 40,
+                            height: 40,
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const Divider(),
+                SizedBox(
+                  height: 300,
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                    ),
+                    itemCount: viewModel.stickers.length,
+                    itemBuilder: (context, index) {
+                      final sticker = viewModel.stickers[index];
+                      return GestureDetector(
+                        onTap: () {
+                          viewModelNotifier.selectSticker(sticker);
+                          Navigator.pop(context);
+                        },
+                        child: Image.network(
+                          sticker.background,
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = ref.watch(chatViewModelProvider(widget.roomId));
-    final viewModelNotifier = ref.read(chatViewModelProvider(widget.roomId).notifier);
+    final viewModelNotifier =
+        ref.read(chatViewModelProvider(widget.roomId).notifier);
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
 
     WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
@@ -58,31 +152,79 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
                 final isMe = msg.senderId == currentUserId;
 
                 return Align(
-                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment:
+                      isMe ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    margin:
+                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     decoration: BoxDecoration(
                       color: isMe
                           ? const Color.fromRGBO(191, 223, 255, 1)
                           : const Color.fromRGBO(230, 230, 230, 1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: msg.type == 'sticker'
-                        ? Image.network(msg.content, width: 120, height: 120, fit: BoxFit.cover)
-                        : Text(msg.content),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (msg.text != null && msg.text!.isNotEmpty)
+                          Text(
+                            msg.text!,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        if (msg.stickerUrl != null &&
+                            msg.stickerUrl!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Image.network(
+                              msg.stickerUrl!,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
           ),
           if (viewModel.selectedSticker != null) ...[
-            Image.network(
-              viewModel.selectedSticker!.background,
-              width: 150,
-              height: 150,
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Image.network(
+                      viewModel.selectedSticker!.background,
+                      width: 150,
+                      height: 150,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () {
+                        viewModelNotifier.cancelSticker();
+                      },
+                      child: const CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Colors.black54,
+                        child: Icon(Icons.close, size: 16, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
           ],
           Row(
             children: [
@@ -95,20 +237,37 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
               IconButton(
                 icon: const Icon(Icons.emoji_emotions),
                 onPressed: () {
-                  // 이모지 선택 모달 열기 추가 가능
+                  openEmojiPicker(context);
                 },
               ),
               IconButton(
                 icon: const Icon(Icons.send),
                 onPressed: () {
                   final text = textEditingController.text.trim();
-                  if (viewModel.selectedSticker != null) {
-                    viewModelNotifier.sendStickerMessage(currentUserId, viewModel.selectedSticker!.background);
+                  final sticker = viewModel.selectedSticker;
+
+                  if (text.isNotEmpty && sticker != null) {
+                    viewModelNotifier.sendMixedMessage(
+                      currentUserId,
+                      text: text,
+                      stickerUrl: sticker.background,
+                    );
+                    textEditingController.clear();
+                    viewModelNotifier.cancelSticker();
+                  } else if (sticker != null) {
+                    viewModelNotifier.sendStickerMessage(
+                      currentUserId,
+                      sticker.background,
+                    );
                     viewModelNotifier.cancelSticker();
                   } else if (text.isNotEmpty) {
-                    viewModelNotifier.sendTextMessage(currentUserId, text);
+                    viewModelNotifier.sendTextMessage(
+                      currentUserId,
+                      text,
+                    );
                     textEditingController.clear();
                   }
+
                   scrollToBottom();
                 },
               ),
