@@ -1,8 +1,6 @@
 import 'dart:math';
 import 'dart:async';
-import 'package:emoji/model/user/user_model.dart';
 import 'package:emoji/viewmodel/code/code_viewmodel.dart';
-import 'package:emoji/viewmodel/user/user_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -14,8 +12,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  final UserViewModel _userViewModel = UserViewModel();
-  
+
   CoreViewModel coreViewModel = CoreViewModel();
   bool matching = false; // 예시 데이터 (firebase와 연동 예정)
   Timer? timer;
@@ -24,8 +21,8 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final deviceId = coreViewModel.getDeviceId(); 
-                
+    final deviceId = coreViewModel.getDeviceId();
+
     void startTimer() {
       time = 30;
       if (matching == false) {
@@ -152,9 +149,6 @@ class _MainPageState extends State<MainPage> {
             padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPadding + 50),
             child: ElevatedButton(
               onPressed: () async {
-                final user1 = await _userViewModel.fetchUsers();
-                _userViewModel.createUser(user1[0]);
-                print(user1);
                 setState(() {
                   timer?.cancel();
                   matching = !matching;
