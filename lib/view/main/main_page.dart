@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:async';
 import 'package:emoji/model/user/user_model.dart';
+import 'package:emoji/view/chatroom/chatroom_view.dart';
 import 'package:emoji/viewmodel/code/code_viewmodel.dart';
 import 'package:emoji/viewmodel/user/user_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,12 @@ class _MainPageState extends ConsumerState<MainPage> {
     CoreViewModel coreViewModel = CoreViewModel();
     final myUid = await coreViewModel.getDeviceId();
     myData = await mainVm.findUserByUid(myUid);
+    // roomId가 있다면 채팅방으로 이동
+    if(myData!.roomId != ''){
+      Navigator.push(context, MaterialPageRoute(builder: (context){
+        return ChatRoomView(roomId: myData!.roomId);
+      }));
+    }
     setState(() {}); // 데이터 다 불러오고 UI 새로고침
   }
 
