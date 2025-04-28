@@ -1,5 +1,8 @@
 import 'dart:math';
 import 'dart:async';
+import 'package:emoji/model/user/user_model.dart';
+import 'package:emoji/viewmodel/code/code_viewmodel.dart';
+import 'package:emoji/viewmodel/user/user_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -11,6 +14,9 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  final UserViewModel _userViewModel = UserViewModel();
+  
+  CoreViewModel coreViewModel = CoreViewModel();
   bool matching = false; // 예시 데이터 (firebase와 연동 예정)
   Timer? timer;
   int time = 30;
@@ -18,7 +24,8 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-
+    final deviceId = coreViewModel.getDeviceId(); 
+                
     void startTimer() {
       time = 30;
       if (matching == false) {
@@ -88,7 +95,7 @@ class _MainPageState extends State<MainPage> {
         children: [
           Spacer(),
           Text(
-            !matching ? '동네 친구 찾는 중...' : '상대방을 찾는 중${'.' * (time%3+1)}',
+            !matching ? '동네 친구 찾는 중...' : '상대방을 찾는 중${'.' * (time % 3 + 1)}',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -144,7 +151,10 @@ class _MainPageState extends State<MainPage> {
           Padding(
             padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPadding + 50),
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                final user1 = await _userViewModel.fetchUsers();
+                _userViewModel.createUser(user1[0]);
+                print(user1);
                 setState(() {
                   timer?.cancel();
                   matching = !matching;
