@@ -20,7 +20,6 @@ class MainViewModel extends Notifier<List<User>?> {
     }).map((e) {
       return User.fromMap(e.data());
     }).toList();
-    print('getUser');
   }
 
   Future<void> addUser(User user) async {
