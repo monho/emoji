@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'dart:async';
-import 'package:emoji/viewmodel/code/code_viewmodel.dart';
+import 'package:emoji/model/user/user_model.dart';
 import 'package:emoji/viewmodel/user/user_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,9 +14,22 @@ class MainPage extends ConsumerStatefulWidget {
 }
 
 class _MainPageState extends ConsumerState<MainPage> {
-  bool matching = false; // 예시 데이터 (firebase와 연동 예정)
+  User? myData;
+  late bool matching = myData?.isMatched ?? false; // 예시 데이터 (firebase와 연동 예정)
   Timer? timer;
   int time = 30;
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  void loadUserData() async {
+    final mainVm = ref.read(mainViewModelProvider.notifier);
+    myData = await mainVm.findUserByUid('uid1');
+    setState(() {}); // 데이터 다 불러오고 UI 새로고침
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +37,10 @@ class _MainPageState extends ConsumerState<MainPage> {
     final mainState = ref.watch(mainViewModelProvider);
     final mainVm = ref.read(mainViewModelProvider.notifier);
 
-    // 같은 동네 유저 불러오기 (전달 값은 현재 내 동네)
     mainVm.getUser('Seoul');
-    final int nearByPeople = mainState?.length ?? 0;
 
+    final myLat = myData?.coordinates[0];
+    final myLon = myData?.coordinates[1];
     void startTimer() {
       time = 30;
       if (matching == false) {
@@ -55,10 +68,6 @@ class _MainPageState extends ConsumerState<MainPage> {
       }
     }
 
-    // 예시 데이터 (나중에 firebase와 연동)
-    double myLat = 37.56104;
-    double myLon = 126.9257;
-
     /// 거리 계산 (lat1, lon1, lat2, lon2)
     int calculateDistance(double lat1, double lon1, double lat2, double lon2) {
       const R = 6371000; // 지구 반지름 (단위: 미터)
@@ -75,9 +84,8 @@ class _MainPageState extends ConsumerState<MainPage> {
 
     List<int?> distance = mainState!.map((e) {
       return calculateDistance(
-          myLat, myLon, e.coordinates[0], e.coordinates[1]);
+          (myLat ?? 0), (myLon ?? 0), e.coordinates[0], e.coordinates[1]);
     }).toList();
-
     return Scaffold(
       backgroundColor: !matching ? Colors.white : Colors.black,
       body: Column(
@@ -105,12 +113,14 @@ class _MainPageState extends ConsumerState<MainPage> {
                   scale: 0.3,
                   child: Lottie.asset('assets/lottie/emoji.json'),
                 ),
-                ...List.generate(nearByPeople, (index) {
+                ...List.generate(mainState.length, (index) {
                   // 중심 x 186, y186 기준 (393/2 - ㅈ)
                   double xPos = // 배율은 레이더 크기에 맞춰서 변경
-                      (myLat - mainState[index].coordinates[0]) * 8000 + 186;
+                      ((myLat ?? 0) - mainState[index].coordinates[0]) * 10000 +
+                          186;
                   double yPos =
-                      (myLon - mainState[index].coordinates[1]) * 8000 + 186;
+                      ((myLon ?? 0) - mainState[index].coordinates[1]) * 10000 +
+                          186;
                   return Positioned(
                     left: xPos,
                     top: yPos,
@@ -141,14 +151,18 @@ class _MainPageState extends ConsumerState<MainPage> {
             padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPadding + 50),
             child: ElevatedButton(
               onPressed: () async {
-                setState(() {
-                  timer?.cancel();
-                  matching = !matching;
-                  startTimer();
-                });
+                if (mainState.isNotEmpty) {
+                  setState(() {
+                    timer?.cancel();
+                    matching = !matching;
+                    startTimer();
+                  });
+                }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: !matching ? Colors.blue : Colors.red,
+                backgroundColor: !matching
+                    ? (mainState.isNotEmpty ? Colors.blue : Colors.grey)
+                    : Colors.red,
                 foregroundColor: Colors.white,
                 minimumSize: Size.fromHeight(50),
                 shape: RoundedRectangleBorder(

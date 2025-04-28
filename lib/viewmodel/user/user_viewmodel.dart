@@ -37,6 +37,19 @@ class MainViewModel extends Notifier<List<User>?> {
       user.uid: true,
     });
   }
+
+  Future<User> findUserByUid(String uid) async {
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef = firestore.collection('users');
+    final snapshot = await collectionRef.get();
+    final documentSnapshot = snapshot.docs;
+    final map = documentSnapshot
+        .firstWhere(
+          (e) => e.data()['uid'] == uid,
+        )
+        .data();
+    return User.fromMap(map);
+  }
 }
 
 final mainViewModelProvider = NotifierProvider<MainViewModel, List<User>?>(() {

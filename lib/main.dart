@@ -1,4 +1,5 @@
 import 'package:emoji/firebase_options.dart';
+import 'package:emoji/view/main/main_page.dart';
 import 'package:emoji/view/registration/profile_setup_page.dart';
 import 'package:emoji/view/splash/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: ProfileSetupPage(),
+      home: MainPage(),
     );
   }
 }

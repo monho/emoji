@@ -5,7 +5,6 @@ class User {
   final String gender;
   final String roomId;
   final String address;
-  final int reportCnt;
   final List<double> coordinates;
   bool isMatched;
   bool isOnline;
@@ -17,7 +16,6 @@ class User {
     required this.gender,
     required this.roomId,
     required this.address,
-    this.reportCnt = 0,
     required this.coordinates,
     this.isMatched = false,
     this.isOnline = false,
@@ -32,6 +30,8 @@ class User {
       roomId: map['roomId'],
       address: map['address'],
       coordinates: [map['coordinates'][0], map['coordinates'][1]],
+      isMatched: map['isMatched'],
+      isOnline: map['isOnline']
     );
   }
 
@@ -43,7 +43,9 @@ class User {
       'gender': gender,
       'roomId': roomId,
       'address': address,
-      'coordinates': coordinates
+      'coordinates': coordinates,
+      'isMatched': isMatched,
+      'isOnline': isOnline
     };
   }
 }
