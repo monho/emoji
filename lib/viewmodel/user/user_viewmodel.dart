@@ -1,26 +1,46 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emoji/model/user/user_model.dart';
-import 'package:emoji/repository/user_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class UserViewModel{
-  final UserRepository userRepository = UserRepository();
-
-Future<List<User>> fetchUsers() async {
-  await Future.delayed(Duration(milliseconds: 500)); // 더 현실적인 딜레이
-  if (userRepository.dummyUsers.isEmpty) {
-    print('❗ dummyUsers 비어있음');
+class MainViewModel extends Notifier<List<User>?> {
+  @override
+  build() {
     return [];
   }
 
-  print('✅ 첫 주소: ${userRepository.dummyUsers[0].address}');
-  return userRepository.dummyUsers;
-}
-
-  Future<void> createUser(User user)async{
-    final test = FirebaseFirestore.instance;
-    final collectRef = test.collection('users');
-    final docRef = collectRef.doc();
-    await docRef.set(user.toMap());
+  Future<void> getUser(String address) async {
+    // n초마다 유저정보 불러옴
+    await Future.delayed(Duration(seconds: 5));
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef = firestore.collection('users');
+    final snapshot = await collectionRef.get();
+    final documentSnapshot = snapshot.docs;
+    state = documentSnapshot.where((e) {
+      return e.data()['address'] == address;
+    }).map((e) {
+      return User.fromMap(e.data());
+    }).toList();
+    print('getUser');
   }
 
+  Future<void> addUser(User user) async {
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef = firestore.collection('users');
+    final documentRef = collectionRef.doc();
+    await documentRef.set(user.toMap());
+    print('addUser');
+  }
+
+  Future<void> addWaiting(User user) async {
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef = firestore.collection('waiting_users');
+    final documentRef = collectionRef.doc(user.address);
+    await documentRef.set({
+      user.uid: true,
+    });
+  }
 }
+
+final mainViewModelProvider = NotifierProvider<MainViewModel, List<User>?>(() {
+  return MainViewModel();
+});
