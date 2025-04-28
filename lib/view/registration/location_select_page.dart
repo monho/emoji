@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -11,32 +14,145 @@ class LocationSelectPage extends StatefulWidget {
 }
 
 class _LocationSelectPageState extends State<LocationSelectPage> {
-  NaverMapController? mapController;
-  NLatLng? _currentPosition;
-  String? _selectedCity;
+  late NaverMapController _mapController;
+
+  NLatLng _initialPosition = const NLatLng(37.5665, 126.9780); // 서울 기본값
   bool _isLoading = false;
-  bool _isMapInitialized = false;
+  String? _fullAddress;
+  List<Map<String, dynamic>> _features = [];
 
   @override
   void initState() {
     super.initState();
-    // Set initial position to Seoul
-    _currentPosition = const NLatLng(37.5665, 126.9780);
     _checkLocationPermission();
+    _loadGeoJson();
+  }
+
+  Future<void> _loadGeoJson() async {
+    final String data =
+        await rootBundle.loadString('assets/mapCore/HangJeongDong.geojson');
+    final Map<String, dynamic> jsonResult = json.decode(data);
+    _features = List<Map<String, dynamic>>.from(jsonResult['features']);
+  }
+
+  NLatLng _calculatePolygonCenter(List<NLatLng> polygon) {
+    double sumLat = 0;
+    double sumLng = 0;
+
+    for (final point in polygon) {
+      sumLat += point.latitude;
+      sumLng += point.longitude;
+    }
+
+    final centerLat = sumLat / polygon.length;
+    final centerLng = sumLng / polygon.length;
+
+    return NLatLng(centerLat, centerLng);
+  }
+
+  Future<void> _drawCurrentNeighborhood() async {
+    try {
+      setState(() => _isLoading = true);
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      final currentPoint = NLatLng(position.latitude, position.longitude);
+
+      for (final feature in _features) {
+        final geometry = feature['geometry'];
+        if (geometry['type'] == 'MultiPolygon') {
+          final coordinates = geometry['coordinates'][0][0] as List;
+          List<NLatLng> polygon = coordinates.map<NLatLng>((coord) {
+            return NLatLng(coord[1], coord[0]);
+          }).toList();
+
+          if (polygon.first != polygon.last) {
+            polygon.add(polygon.first); // 폴리곤 닫기
+          }
+
+          if (_isPointInPolygon(currentPoint, polygon)) {
+            // ✅ 내 동 찾음
+
+            // 💬 행정동 이름 가져오기
+            final addressName =
+                feature['properties']['adm_nm'] as String? ?? '알 수 없음';
+
+            // 🔥 상단 텍스트를 이때 업데이트
+            setState(() {
+              _fullAddress = addressName;
+            });
+
+            // 폴리곤 중심 계산
+            final centerPoint = _calculatePolygonCenter(polygon);
+
+            // 폴리곤 오버레이 생성
+            final polygonOverlay = NPolygonOverlay(
+              id: 'currentNeighborhood',
+              coords: polygon,
+              color: const Color.fromARGB(255, 255, 0, 0).withOpacity(0.3),
+              outlineColor: Color.fromARGB(255, 255, 0, 0),
+              outlineWidth: 2,
+            );
+
+            _mapController.clearOverlays(); // 기존 오버레이 지우고
+            _mapController.addOverlay(polygonOverlay);
+
+            // 중심점으로 카메라 이동
+            await _mapController.updateCamera(
+              NCameraUpdate.scrollAndZoomTo(
+                target: centerPoint,
+                zoom: 13.5,
+              ),
+            );
+
+            print('내 동 이름: $addressName');
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      print('폴리곤 찾기 실패: $e');
+      _showSnackbar('오버레이를 표시하는 데 실패했습니다.');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  bool _isPointInPolygon(NLatLng point, List<NLatLng> polygon) {
+    int intersectCount = 0;
+    for (int j = 0; j < polygon.length - 1; j++) {
+      if (_rayCastIntersect(point, polygon[j], polygon[j + 1])) {
+        intersectCount++;
+      }
+    }
+    return (intersectCount % 2) == 1;
+  }
+
+  bool _rayCastIntersect(NLatLng point, NLatLng vertA, NLatLng vertB) {
+    final aY = vertA.latitude;
+    final bY = vertB.latitude;
+    final aX = vertA.longitude;
+    final bX = vertB.longitude;
+    final pY = point.latitude;
+    final pX = point.longitude;
+
+    if ((aY > pY && bY > pY) || (aY < pY && bY < pY) || (aX < pX && bX < pX)) {
+      return false;
+    }
+
+    final m = (aY - bY) / (aX - bX);
+    final bee = -aX * m + aY;
+    final x = (pY - bee) / m;
+
+    return x > pX;
   }
 
   Future<void> _checkLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('위치 서비스가 비활성화되어 있습니다.'),
-          action: SnackBarAction(
-            label: '설정으로 이동',
-            onPressed: () => Geolocator.openLocationSettings(),
-          ),
-        ),
-      );
+      _showSnackbar('위치 서비스가 비활성화되어 있습니다.', Geolocator.openLocationSettings);
       return;
     }
 
@@ -44,81 +160,33 @@ class _LocationSelectPageState extends State<LocationSelectPage> {
     if (permission == LocationPermission.denied) {
       await _requestLocationPermission();
     } else if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('앱 설정에서 위치 권한을 허용해주세요.'),
-          action: SnackBarAction(
-            label: '설정으로 이동',
-            onPressed: () => Geolocator.openAppSettings(),
-          ),
-        ),
-      );
+      _showSnackbar('앱 설정에서 위치 권한을 허용해주세요.', Geolocator.openAppSettings);
     } else {
       await _getCurrentLocation();
     }
   }
 
   Future<void> _requestLocationPermission() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      LocationPermission permission = await Geolocator.requestPermission();
-
-      if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('위치 권한이 필요합니다.'),
-            action: SnackBarAction(
-              label: '다시 시도',
-              onPressed: _requestLocationPermission,
-            ),
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('앱 설정에서 위치 권한을 허용해주세요.'),
-            action: SnackBarAction(
-              label: '설정으로 이동',
-              onPressed: () => Geolocator.openAppSettings(),
-            ),
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
+    LocationPermission permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      _showSnackbar('위치 권한이 필요합니다.', _requestLocationPermission);
+    } else if (permission == LocationPermission.deniedForever) {
+      _showSnackbar('앱 설정에서 위치 권한을 허용해주세요.', Geolocator.openAppSettings);
+    } else {
       await _getCurrentLocation();
-    } catch (e) {
-      print('Error requesting location permission: $e');
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
   Future<void> _getCurrentLocation() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
       setState(() {
-        _currentPosition = NLatLng(position.latitude, position.longitude);
+        _initialPosition = NLatLng(position.latitude, position.longitude);
       });
 
       List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -127,58 +195,44 @@ class _LocationSelectPageState extends State<LocationSelectPage> {
       );
 
       if (placemarks.isNotEmpty) {
-        Placemark place = placemarks[0];
-        String? city = place.locality;
-        if (city != null && city.endsWith('시')) {
-          setState(() {
-            _selectedCity = city;
-          });
-        }
+        Placemark place = placemarks.first;
+        setState(() {
+          _fullAddress =
+              '${place.administrativeArea ?? ''} ${place.subAdministrativeArea ?? ''} ${place.subLocality ?? ''}'
+                  .trim();
+        });
       }
 
-      if (_isMapInitialized && mapController != null) {
-        await mapController!.updateCamera(
-          NCameraUpdate.withParams(
-            target: _currentPosition!,
-            zoom: 14,
-          ),
-        );
-
-        // Add current location marker
-        await mapController!.addOverlay(
-          NMarker(
-            id: 'currentLocation',
-            position: _currentPosition!,
-            icon: NOverlayImage.fromAssetImage(
-                'assets/image/current_location.png'),
-            caption: NOverlayCaption(
-              text: '현재 위치',
-              color: Colors.black,
-              haloColor: Colors.white,
-              textSize: 14,
-            ),
-          ),
-        );
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
+      await _moveCamera(_initialPosition);
     } catch (e) {
       print('Error getting location: $e');
-      setState(() {
-        _isLoading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('위치를 가져오는 중 오류가 발생했습니다.'),
-          action: SnackBarAction(
-            label: '다시 시도',
-            onPressed: _getCurrentLocation,
-          ),
-        ),
-      );
+      _showSnackbar('위치를 가져오는 중 오류가 발생했습니다.', _getCurrentLocation);
+    } finally {
+      setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _moveCamera(NLatLng position) async {
+    await _mapController.updateCamera(
+      NCameraUpdate.scrollAndZoomTo(
+        target: position,
+        zoom: 14,
+      ),
+    );
+  }
+
+  void _showSnackbar(String message, [VoidCallback? action]) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: action != null
+            ? SnackBarAction(
+                label: '설정',
+                onPressed: action,
+              )
+            : null,
+      ),
+    );
   }
 
   @override
@@ -186,48 +240,37 @@ class _LocationSelectPageState extends State<LocationSelectPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('지역 선택'),
+        title: const Text('지역 선택'),
         centerTitle: true,
       ),
       body: Stack(
         children: [
           Column(
             children: [
-              if (_selectedCity != null)
+              if (_fullAddress != null)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    '선택된 지역: $_selectedCity',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    '선택된 지역: $_fullAddress',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               Expanded(
                 child: NaverMap(
                   options: NaverMapViewOptions(
                     initialCameraPosition: NCameraPosition(
-                      target:
-                          _currentPosition ?? const NLatLng(37.5665, 126.9780),
-                      zoom: 14.0,
+                      target: _initialPosition,
+                      zoom: 14,
                     ),
-                    locationButtonEnable: true,
-                    mapType: NMapType.basic,
+                    locationButtonEnable: false,
+                    indoorEnable: true,
                   ),
-                  onMapReady: (controller) async {
-                    mapController = controller;
-                    setState(() {
-                      _isMapInitialized = true;
-                    });
-                    if (_currentPosition != null) {
-                      await controller.updateCamera(
-                        NCameraUpdate.withParams(
-                          target: _currentPosition!,
-                          zoom: 14,
-                        ),
-                      );
-                    }
+                  onMapReady: (NaverMapController controller) {
+                    _mapController = controller;
                   },
                 ),
               ),
@@ -237,34 +280,32 @@ class _LocationSelectPageState extends State<LocationSelectPage> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _selectedCity != null
-                        ? () {
-                            Navigator.pop(context, _selectedCity);
-                          }
+                    onPressed: _fullAddress != null
+                        ? () => Navigator.pop(context, _fullAddress)
                         : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
                     ),
-                    child: Text('확인'),
+                    child: const Text('확인'),
                   ),
                 ),
               ),
             ],
           ),
           Positioned(
-            top: 16,
-            right: 16,
+            top: 576,
+            left: 6,
             child: FloatingActionButton(
-              onPressed: _checkLocationPermission,
-              child: Icon(Icons.my_location),
-              tooltip: '현 위치 검색',
+              onPressed: _drawCurrentNeighborhood,
+              tooltip: '현 위치 동 찾기',
+              child: const Icon(Icons.my_location),
             ),
           ),
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.5),
-              child: Center(child: CircularProgressIndicator()),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
