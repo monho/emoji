@@ -1,9 +1,6 @@
-
 // 필요한 패키지 불러오기
 import 'dart:async';
 import 'dart:math';
-import 'package:emoji/view/terms/terms_screen.dart'; // 경로 주의!
-import 'package:emoji/view/chatroom/chatroom_view.dart';
 import 'package:flutter/material.dart';
 import 'package:emoji/view/main/main_page.dart';
 
@@ -54,8 +51,6 @@ class _SplashScreenState extends State<SplashScreen>
 
   List<int> randomSequence = []; // 공들이 지나갈 때 얼굴 랜덤 순서
   int previousFinalIndex = -1; // 마지막에 멈출 얼굴 인덱스 기억
-
-class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void initState() {
@@ -172,8 +167,8 @@ class _SplashScreenState extends State<SplashScreen> {
       _faceController.forward();
     });
 
-    // 2.3초 지나면 메인 페이지로 이동
-    Timer(const Duration(milliseconds: 2300), () {
+    // 1초 지나면 메인 페이지로 이동
+    Timer(const Duration(milliseconds: 1000), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainPage()),
@@ -190,8 +185,6 @@ class _SplashScreenState extends State<SplashScreen> {
     _faceController.dispose();
     super.dispose();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
