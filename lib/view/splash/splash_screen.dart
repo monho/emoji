@@ -167,8 +167,8 @@ class _SplashScreenState extends State<SplashScreen>
       _faceController.forward();
     });
 
-    // 1초 지나면 메인 페이지로 이동
-    Timer(const Duration(milliseconds: 1000), () {
+    // 2.3초 지나면 메인 페이지로 이동
+    Timer(const Duration(milliseconds: 2300), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainPage()),
