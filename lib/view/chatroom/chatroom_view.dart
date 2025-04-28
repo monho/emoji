@@ -68,9 +68,26 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
                           : const Color.fromRGBO(230, 230, 230, 1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: msg.type == 'sticker'
-                        ? Image.network(msg.content, width: 120, height: 120, fit: BoxFit.cover)
-                        : Text(msg.content),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (msg.text != null && msg.text!.isNotEmpty)
+                          Text(
+                            msg.text!,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        if (msg.stickerUrl != null && msg.stickerUrl!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Image.network(
+                              msg.stickerUrl!,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -95,18 +112,37 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
               IconButton(
                 icon: const Icon(Icons.emoji_emotions),
                 onPressed: () {
-                  // 이모지 선택 모달 열기 추가 가능
+                  // 이모지 선택 모달 열기
                 },
               ),
               IconButton(
                 icon: const Icon(Icons.send),
                 onPressed: () {
                   final text = textEditingController.text.trim();
-                  if (viewModel.selectedSticker != null) {
-                    viewModelNotifier.sendStickerMessage(currentUserId, viewModel.selectedSticker!.background);
+                  final selectedSticker = viewModel.selectedSticker;
+                  
+                  if (text.isNotEmpty && selectedSticker != null) {
+                    // 텍스트 + 스티커 둘 다 있는 경우
+                    viewModelNotifier.sendMixedMessage(
+                      currentUserId,
+                      text: text,
+                      stickerUrl: selectedSticker.background,
+                    );
+                    textEditingController.clear();
+                    viewModelNotifier.cancelSticker();
+                  } else if (selectedSticker != null) {
+                    // 스티커만 있는 경우
+                    viewModelNotifier.sendStickerMessage(
+                      currentUserId,
+                      selectedSticker.background,
+                    );
                     viewModelNotifier.cancelSticker();
                   } else if (text.isNotEmpty) {
-                    viewModelNotifier.sendTextMessage(currentUserId, text);
+                    // 텍스트만 있는 경우
+                    viewModelNotifier.sendTextMessage(
+                      currentUserId,
+                      text,
+                    );
                     textEditingController.clear();
                   }
                   scrollToBottom();

@@ -4,12 +4,16 @@ class ChatMessage {
   final String senderId;
   final String content;
   final DateTime sentAt;
+  final String? text;
+  final String? stickerUrl;
   final String type;
 
   ChatMessage({
     required this.senderId,
     required this.content,
     required this.sentAt,
+    this.text,
+    this.stickerUrl,
     required this.type,
   });
 
@@ -17,6 +21,8 @@ class ChatMessage {
     return ChatMessage(
       senderId: map['senderId'],
       content: map['content'],
+      text: map['text'],
+      stickerUrl: map['stickerUrl'],
       sentAt: (map['sentAt'] as Timestamp).toDate(),
       type: map['type'] ?? 'text',
     );
@@ -27,6 +33,8 @@ class ChatMessage {
       'senderId': senderId,
       'content': content,
       'sentAt': Timestamp.fromDate(sentAt),
+      'text': text,
+      'stickerUrl': stickerUrl,
       'type': type,
     };
   }

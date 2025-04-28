@@ -4,7 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emoji/model/chatroom/chatroom_model.dart';
 import 'package:flutter/services.dart';
 
-final chatViewModelProvider = StateNotifierProvider.family<ChatViewModel, ChatState, String>((ref, roomId) {
+final chatViewModelProvider =
+    StateNotifierProvider.family<ChatViewModel, ChatState, String>(
+        (ref, roomId) {
   return ChatViewModel(roomId: roomId);
 });
 
@@ -48,7 +50,8 @@ class ChatViewModel extends StateNotifier<ChatState> {
         .orderBy('sentAt', descending: false)
         .snapshots()
         .listen((snapshot) {
-      final msgs = snapshot.docs.map((doc) => ChatMessage.fromMap(doc.data())).toList();
+      final msgs =
+          snapshot.docs.map((doc) => ChatMessage.fromMap(doc.data())).toList();
       state = state.copyWith(messages: msgs);
     });
   }
@@ -61,7 +64,11 @@ class ChatViewModel extends StateNotifier<ChatState> {
       type: 'text',
     );
 
-    await firestore.collection('chatRooms').doc(roomId).collection('messages').add(message.toMap());
+    await firestore
+        .collection('chatRooms')
+        .doc(roomId)
+        .collection('messages')
+        .add(message.toMap());
   }
 
   Future<void> sendStickerMessage(String senderId, String stickerUrl) async {
@@ -72,7 +79,11 @@ class ChatViewModel extends StateNotifier<ChatState> {
       type: 'sticker',
     );
 
-    await firestore.collection('chatRooms').doc(roomId).collection('messages').add(message.toMap());
+    await firestore
+        .collection('chatRooms')
+        .doc(roomId)
+        .collection('messages')
+        .add(message.toMap());
   }
 
   void selectSticker(Stick sticker) {
@@ -81,6 +92,23 @@ class ChatViewModel extends StateNotifier<ChatState> {
 
   void cancelSticker() {
     state = state.copyWith(selectedSticker: null);
+  }
+
+  Future<void> sendMixedMessage(String senderId,
+      {String? text, String? stickerUrl}) async {
+    final message = ChatMessage(
+      senderId: senderId,
+      text: text,
+      stickerUrl: stickerUrl,
+      sentAt: DateTime.now(),
+      type: 'mixed', content: '', // ✅ 둘 다 있을 때 mixed
+    );
+
+    await firestore
+        .collection('chatRooms')
+        .doc(roomId)
+        .collection('messages')
+        .add(message.toMap());
   }
 
   Future<void> loadStickers(int type) async {
@@ -98,7 +126,8 @@ class ChatViewModel extends StateNotifier<ChatState> {
         final sticker = stickerList[i];
         loadedStickers.add(Stick(
           idItem: i,
-          background: "https://storep-phinf.pstatic.net/$groupId/original_${i + 1}.gif?type=mfullfill108_100",
+          background:
+              "https://storep-phinf.pstatic.net/$groupId/original_${i + 1}.gif?type=mfullfill108_100",
           imgName: sticker["id"].toString(),
           testX: sticker["id"].toString(),
         ));
