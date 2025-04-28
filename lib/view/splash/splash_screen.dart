@@ -1,4 +1,5 @@
 import 'package:emoji/terms/terms_screen.dart'; // 경로 주의!
+import 'package:emoji/view/chatroom/chatroom_view.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -7,6 +8,7 @@ class SplashScreen extends StatefulWidget {
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
+
 
 class _SplashScreenState extends State<SplashScreen> {
   @override
@@ -18,6 +20,8 @@ class _SplashScreenState extends State<SplashScreen> {
       }));
     });
   }
+
+
 
   @override
   Widget build(BuildContext context) {
