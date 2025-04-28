@@ -1,4 +1,4 @@
-import 'package:emoji/terms/terms_screen.dart'; // 경로 주의!
+import 'package:emoji/view/terms/terms_screen.dart'; // 경로 주의!
 import 'package:emoji/view/chatroom/chatroom_view.dart';
 import 'package:flutter/material.dart';
 
