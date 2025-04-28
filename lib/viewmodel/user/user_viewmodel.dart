@@ -23,6 +23,7 @@ class MainViewModel extends Notifier<List<User>?> {
   }
 
   Future<void> addUser(User user) async {
+    print('addUser');
     final firestore = FirebaseFirestore.instance;
     final collectionRef = firestore.collection('users');
     final documentRef = collectionRef.doc();
@@ -30,15 +31,27 @@ class MainViewModel extends Notifier<List<User>?> {
   }
 
   Future<void> addWaiting(User user) async {
+    print('addWaiting');
     final firestore = FirebaseFirestore.instance;
     final collectionRef = firestore.collection('waiting_users');
     final documentRef = collectionRef.doc(user.address);
-    await documentRef.set({
-      user.uid: true,
-    });
+    final collectionRef_2 = documentRef.collection('users');
+    final documentRef_2 = collectionRef_2.doc(user.uid);
+    documentRef_2.set(user.toMap());
+  }
+
+  Future<void> removeWaiting(User user) async {
+    print('removeWaiting');
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef = firestore.collection('waiting_users');
+    final documentRef = collectionRef.doc(user.address);
+    final collectionRef_2 = documentRef.collection('users');
+    final documentRef_2 = collectionRef_2.doc(user.uid);
+    await documentRef_2.delete();
   }
 
   Future<User> findUserByUid(String uid) async {
+    print('findUserByUid');
     final firestore = FirebaseFirestore.instance;
     final collectionRef = firestore.collection('users');
     final snapshot = await collectionRef.get();

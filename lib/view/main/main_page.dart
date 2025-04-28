@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:async';
 import 'package:emoji/model/user/user_model.dart';
+import 'package:emoji/viewmodel/code/code_viewmodel.dart';
 import 'package:emoji/viewmodel/user/user_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,20 +16,36 @@ class MainPage extends ConsumerStatefulWidget {
 
 class _MainPageState extends ConsumerState<MainPage> {
   User? myData;
-  late bool matching = myData?.isMatched ?? false; // 예시 데이터 (firebase와 연동 예정)
-  Timer? timer;
+  late bool matching = myData?.isMatched ?? false;
+  Timer? matchingTimer;
+  Timer? refreshTimer;
   int time = 30;
 
   @override
   void initState() {
     super.initState();
     loadUserData();
+    startAutoReload();
+  }
+
+  void startAutoReload() {
+    refreshTimer = Timer.periodic(Duration(seconds: 3), (timer) {
+      loadUserData();
+    });
   }
 
   void loadUserData() async {
     final mainVm = ref.read(mainViewModelProvider.notifier);
-    myData = await mainVm.findUserByUid('uid1');
+    CoreViewModel coreViewModel = CoreViewModel();
+    final myUid = await coreViewModel.getDeviceId();
+    myData = await mainVm.findUserByUid(myUid);
     setState(() {}); // 데이터 다 불러오고 UI 새로고침
+  }
+
+  @override
+  void dispose() {
+    refreshTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -37,7 +54,7 @@ class _MainPageState extends ConsumerState<MainPage> {
     final mainState = ref.watch(mainViewModelProvider);
     final mainVm = ref.read(mainViewModelProvider.notifier);
 
-    mainVm.getUser('Seoul');
+    mainVm.getUser(myData?.address ?? '');
 
     final myLat = myData?.coordinates[0];
     final myLon = myData?.coordinates[1];
@@ -46,10 +63,10 @@ class _MainPageState extends ConsumerState<MainPage> {
       if (matching == false) {
         return;
       }
-      timer = Timer.periodic(Duration(seconds: 1), (t) {
+      matchingTimer = Timer.periodic(Duration(seconds: 1), (t) {
         setState(() {
           if (time <= 0) {
-            timer?.cancel();
+            matchingTimer?.cancel();
             matching = false;
           } else {
             time--;
@@ -69,7 +86,7 @@ class _MainPageState extends ConsumerState<MainPage> {
     }
 
     /// 거리 계산 (lat1, lon1, lat2, lon2)
-    int calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    int? calculateDistance(double lat1, double lon1, double lat2, double lon2) {
       const R = 6371000; // 지구 반지름 (단위: 미터)
       final dLat = (lat2 - lat1) * pi / 180;
       final dLon = (lon2 - lon1) * pi / 180;
@@ -152,8 +169,13 @@ class _MainPageState extends ConsumerState<MainPage> {
             child: ElevatedButton(
               onPressed: () async {
                 if (mainState.isNotEmpty) {
+                  if(matching == false){
+                    mainVm.addWaiting(myData!);
+                  }else{
+                    mainVm.removeWaiting(myData!);
+                  }
                   setState(() {
-                    timer?.cancel();
+                    matchingTimer?.cancel();
                     matching = !matching;
                     startTimer();
                   });
