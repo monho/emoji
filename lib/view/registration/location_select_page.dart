@@ -124,7 +124,6 @@ class _LocationSelectPageState extends State<LocationSelectPage> {
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
-        localeIdentifier: 'ko_KR',
       );
 
       if (placemarks.isNotEmpty) {
