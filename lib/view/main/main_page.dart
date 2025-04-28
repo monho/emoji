@@ -46,6 +46,7 @@ class _MainPageState extends ConsumerState<MainPage> {
         return ChatRoomView(roomId: myData!.roomId);
       }));
     }
+    mainVm.matchingUsers(myData!);
     setState(() {}); // 데이터 다 불러오고 UI 새로고침
   }
 

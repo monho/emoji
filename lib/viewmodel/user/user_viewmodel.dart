@@ -63,6 +63,34 @@ class MainViewModel extends Notifier<List<User>?> {
         .data();
     return User.fromMap(map);
   }
+
+  Future<void> matchingUsers(User user) async {
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef = firestore.collection('waiting_users');
+    final documentRef = collectionRef.doc(user.address);
+    final collectionRef_2 = documentRef.collection('users');
+    final snapshot = await collectionRef_2.get();
+    final documentSnapshot = snapshot.docs;
+    // [uid1, uid2, ...]
+    final waitingUsers = documentSnapshot.map((e) {
+      return e.id;
+    }).toList();
+    if (waitingUsers.length >= 2) {
+      // roomId는 두 유저의 uid를 더해서 생성
+      final String roomId = waitingUsers[0] + waitingUsers[1];
+      // 유저1의 roomId 부여
+      collectionRef_2.doc(waitingUsers[0]).set(
+        {'roomId': roomId},
+      );
+      // 유저2의 roomId 부여
+      collectionRef_2.doc(waitingUsers[1]).set(
+        {'roomId': roomId},
+      );
+      // 대기열에서 유저1, 유저2 삭제
+      collectionRef_2.doc(waitingUsers[0]).delete();
+      collectionRef_2.doc(waitingUsers[1]).delete();
+    }
+  }
 }
 
 final mainViewModelProvider = NotifierProvider<MainViewModel, List<User>?>(() {
