@@ -1,8 +1,9 @@
 // 필요한 패키지 불러오기
 import 'dart:async';
 import 'dart:math';
+import 'package:emoji/view/terms/terms_screen.dart';
+import 'package:emoji/viewmodel/code/code_viewmodel.dart';
 import 'package:flutter/material.dart';
-import 'package:emoji/view/main/main_page.dart';
 
 // Splash 화면을 나타내는 StatefulWidget
 class SplashScreen extends StatefulWidget {
@@ -52,11 +53,13 @@ class _SplashScreenState extends State<SplashScreen>
   List<int> randomSequence = []; // 공들이 지나갈 때 얼굴 랜덤 순서
   int previousFinalIndex = -1; // 마지막에 멈출 얼굴 인덱스 기억
 
+  CoreViewModel coreViewModel = CoreViewModel();
+
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-
+    final deviceId = coreViewModel.getDeviceId();
     // 글자가 띠용 띠용 커졌다 줄어드는 애니메이션 설정
     _textController = AnimationController(
       vsync: this,
@@ -171,7 +174,7 @@ class _SplashScreenState extends State<SplashScreen>
     Timer(const Duration(milliseconds: 2300), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MainPage()),
+        MaterialPageRoute(builder: (context) => const TermsAgreementPage()),
       );
     });
   }

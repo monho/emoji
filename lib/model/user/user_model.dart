@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class User {
   final String uid;
   final String userName;
@@ -25,30 +23,27 @@ class User {
     this.isOnline = false,
   });
 
-  factory User.fromMap(Map<String,dynamic> map){
+  factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      uid: map['uid'], 
-      userName: map['userName'], 
-      age: map['age'], 
-      gender: map['gender'], 
-      roomId: map['roomId'], 
-      address: map['address'], 
+      uid: map['uid'],
+      userName: map['userName'],
+      age: map['age'],
+      gender: map['gender'],
+      roomId: map['roomId'],
+      address: map['address'],
       coordinates: map['coordinates'].values.toList(),
     );
   }
 
-  Map<String,dynamic> toMap(){
-    return{
-      'uid' : uid,
-      'userName' : userName ,
-      'age' : age ,
-      'gender' : gender ,
-      'roomId' : roomId ,
-      'address' : address ,
-      'coordinates' : coordinates
+  Map<String, dynamic> toMap() {
+    return {
+      'uid': uid,
+      'userName': userName,
+      'age': age,
+      'gender': gender,
+      'roomId': roomId,
+      'address': address,
+      'coordinates': coordinates
     };
   }
 }
-
-
-

@@ -1,3 +1,5 @@
+import 'package:emoji/view/main/main_page.dart';
+import 'package:emoji/viewmodel/code/code_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:emoji/view/registration/location_select_page.dart';
 
@@ -9,6 +11,9 @@ class ProfileSetupPage extends StatefulWidget {
 }
 
 class _ProfileSetupPageState extends State<ProfileSetupPage> {
+  final CoreViewModel coreViewModel = CoreViewModel();
+  String deviceId = '';
+
   String? selectedGender;
   final TextEditingController nicknameController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
@@ -18,6 +23,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   @override
   void initState() {
     super.initState();
+    _loadDeviceId();
     ageController.addListener(_validateAge);
   }
 
@@ -26,6 +32,13 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     ageController.dispose();
     nicknameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadDeviceId() async {
+    final id = await coreViewModel.getDeviceId();
+    setState(() {
+      deviceId = id;
+    });
   }
 
   void _validateAge() {
@@ -206,8 +219,53 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
               height: 50,
               child: ElevatedButton(
                 onPressed: _isFormValid()
-                    ? () {
-                        // Handle registration
+                    ? () async {
+                        try {
+                          // Show loading indicator
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+
+                          // Create user data
+                          final userData = {
+                            'nickname': nicknameController.text,
+                            'age': int.parse(ageController.text),
+                            'gender': selectedGender,
+                            'location': selectedLocation,
+                            'createdAt': DateTime.now().toIso8601String(),
+                            'uid': deviceId
+                          };
+
+                          // TODO: Add Firebase registration logic here
+                          // await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                          //   email: email,
+                          //   password: password,
+                          // );
+
+                          // Navigate to main page
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MainPage()),
+                            (Route<dynamic> route) => false,
+                          );
+                        } catch (e) {
+                          // Hide loading indicator
+                          Navigator.pop(context);
+
+                          // Show error message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content:
+                                  Text('회원가입 중 오류가 발생했습니다: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
