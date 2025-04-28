@@ -1,4 +1,6 @@
+import 'package:emoji/view/registration/profile_setup_page.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 class TermsAgreementPage extends StatefulWidget {
   const TermsAgreementPage({super.key});
@@ -30,6 +32,23 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
     });
   }
 
+  Future<bool> _requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return false;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return false;
+    }
+
+    return true; // 위치 권한 OK
+  }
+
   void showTermDialog(String title, String content, VoidCallback onAgree) {
     showDialog(
       context: context,
@@ -59,8 +78,8 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
     );
   }
 
-  Widget buildTermTile(
-      String label, bool value, Function(bool?) onChanged, VoidCallback onTapDetail) {
+  Widget buildTermTile(String label, bool value, Function(bool?) onChanged,
+      VoidCallback onTapDetail) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: Checkbox(
@@ -104,7 +123,8 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
           ),
           const Divider(thickness: 1),
           CheckboxListTile(
-            title: const Text('약관 모두 동의하기', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('약관 모두 동의하기',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             value: allChecked,
             onChanged: updateAll,
             controlAffinity: ListTileControlAffinity.leading,
@@ -142,7 +162,8 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
               });
             });
           }),
-          buildTermTile('[필수] 개인정보 수집/이용', term2, (v) => term2 = v ?? false, () {
+          buildTermTile('[필수] 개인정보 수집/이용', term2, (v) => term2 = v ?? false,
+              () {
             showTermDialog('개인정보 수집/이용', '''
 1. 수집하는 개인정보 항목
   - 필수항목: 이름, 이메일, 휴대전화번호
@@ -163,7 +184,8 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
               });
             });
           }),
-          buildTermTile('[필수] 위치기반 서비스 이용약관', term3, (v) => term3 = v ?? false, () {
+          buildTermTile('[필수] 위치기반 서비스 이용약관', term3, (v) => term3 = v ?? false,
+              () {
             showTermDialog('위치기반 서비스 이용약관', '''
 1. 위치정보의 수집
   - 회사는 정확한 위치기반 서비스를 제공하기 위해 사용자의 위치정보를 수집할 수 있습니다.
@@ -192,8 +214,28 @@ class _TermsAgreementPageState extends State<TermsAgreementPage> {
               height: 50,
               child: ElevatedButton(
                 onPressed: (term1 && term2 && term3)
-                    ? () {
-                        // 동의 완료 후 다음 로직
+                    ? () async {
+                        bool permissionGranted =
+                            await _requestLocationPermission();
+
+                        if (permissionGranted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ProfileSetupPage()),
+                            (Route<dynamic> route) => false,
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('위치 권한이 필요합니다. 설정에서 허용해주세요.'),
+                              action: SnackBarAction(
+                                label: '설정 열기',
+                                onPressed: Geolocator.openAppSettings,
+                              ),
+                            ),
+                          );
+                        }
                       }
                     : null,
                 style: ElevatedButton.styleFrom(

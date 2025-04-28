@@ -27,7 +27,6 @@ class MainViewModel extends Notifier<List<User>?> {
     final collectionRef = firestore.collection('users');
     final documentRef = collectionRef.doc();
     await documentRef.set(user.toMap());
-    print('addUser');
   }
 
   Future<void> addWaiting(User user) async {
