@@ -1,19 +1,19 @@
 import 'dart:math';
 import 'dart:async';
 import 'package:emoji/viewmodel/code/code_viewmodel.dart';
+import 'package:emoji/viewmodel/user/user_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
-class MainPage extends StatefulWidget {
+class MainPage extends ConsumerStatefulWidget {
   const MainPage({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  ConsumerState<MainPage> createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
-
-  CoreViewModel coreViewModel = CoreViewModel();
+class _MainPageState extends ConsumerState<MainPage> {
   bool matching = false; // 예시 데이터 (firebase와 연동 예정)
   Timer? timer;
   int time = 30;
@@ -21,7 +21,12 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    final deviceId = coreViewModel.getDeviceId();
+    final mainState = ref.watch(mainViewModelProvider);
+    final mainVm = ref.read(mainViewModelProvider.notifier);
+
+    // 같은 동네 유저 불러오기 (전달 값은 현재 내 동네)
+    mainVm.getUser('Seoul');
+    final int nearByPeople = mainState?.length ?? 0;
 
     void startTimer() {
       time = 30;
@@ -50,21 +55,9 @@ class _MainPageState extends State<MainPage> {
       }
     }
 
-    //
     // 예시 데이터 (나중에 firebase와 연동)
     double myLat = 37.56104;
     double myLon = 126.9257;
-    List<Map<String, dynamic>> peoplePositions = [
-      {'lat': 37.5450, 'lon': 126.9328, 'name': '1'},
-      {'lat': 37.5736, 'lon': 126.9162, 'name': '2'},
-      {'lat': 37.5694, 'lon': 126.9361, 'name': '3'},
-      {'lat': 37.5559, 'lon': 126.9149, 'name': '4'},
-      {'lat': 37.5553, 'lon': 126.9265, 'name': '5'},
-    ];
-    //
-    //
-
-    final int nearByPeople = peoplePositions.length; // 같은 동네 사람 수
 
     /// 거리 계산 (lat1, lon1, lat2, lon2)
     int calculateDistance(double lat1, double lon1, double lat2, double lon2) {
@@ -80,11 +73,10 @@ class _MainPageState extends State<MainPage> {
       return (R * c).toInt(); // (단위: 미터)
     }
 
-    List<int> distance = peoplePositions.map(
-      (e) {
-        return calculateDistance(myLat, myLon, e['lat'], e['lon']);
-      },
-    ).toList();
+    List<int?> distance = mainState!.map((e) {
+      return calculateDistance(
+          myLat, myLon, e.coordinates[0], e.coordinates[1]);
+    }).toList();
 
     return Scaffold(
       backgroundColor: !matching ? Colors.white : Colors.black,
@@ -115,10 +107,10 @@ class _MainPageState extends State<MainPage> {
                 ),
                 ...List.generate(nearByPeople, (index) {
                   // 중심 x 186, y186 기준 (393/2 - ㅈ)
-                  double xPos = // 배율 나중에 조정해야함!
-                      (myLat - peoplePositions[index]['lat']) * 10000 + 186;
+                  double xPos = // 배율은 레이더 크기에 맞춰서 변경
+                      (myLat - mainState[index].coordinates[0]) * 8000 + 186;
                   double yPos =
-                      (myLon - peoplePositions[index]['lon']) * 10000 + 186;
+                      (myLon - mainState[index].coordinates[1]) * 8000 + 186;
                   return Positioned(
                     left: xPos,
                     top: yPos,
@@ -130,7 +122,7 @@ class _MainPageState extends State<MainPage> {
                           height: 20,
                         ),
                         Text(
-                          formatDistance(distance[index]),
+                          formatDistance(distance[index]!),
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,

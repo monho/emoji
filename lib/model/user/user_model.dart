@@ -31,7 +31,7 @@ class User {
       gender: map['gender'],
       roomId: map['roomId'],
       address: map['address'],
-      coordinates: map['coordinates'].values.toList(),
+      coordinates: [map['coordinates'][0], map['coordinates'][1]],
     );
   }
 

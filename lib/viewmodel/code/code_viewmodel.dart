@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'dart:io';
+
+import 'package:firebase_core/firebase_core.dart';
 
 class CoreViewModel {
   Future<String> getDeviceId() async {
@@ -14,5 +17,20 @@ class CoreViewModel {
     } else {
       return 'unsupported_platform';
     }
+  }
+
+  Future<bool> findUserByUid(String uid) async {
+    final firestore = FirebaseFirestore.instance;
+    final collectionRef = firestore.collection('users');
+    final snapshot = await collectionRef.get();
+    final documentSnapshot = snapshot.docs;
+    try {
+      documentSnapshot.firstWhere(
+        (e) => e.data()['uid'] == uid,
+      );
+    } catch (e) {
+      return false;
+    }
+    return true;
   }
 }
