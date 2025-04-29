@@ -41,8 +41,8 @@ class _MainPageState extends ConsumerState<MainPage> {
     final myUid = await coreViewModel.getDeviceId();
     myData = await mainVm.findUserByUid(myUid);
     // roomId가 있다면 채팅방으로 이동
-    if(myData!.roomId != ''){
-      Navigator.push(context, MaterialPageRoute(builder: (context){
+    if (myData!.roomId != '' && myData!.isMatched == true) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) {
         return ChatRoomView(roomId: myData!.roomId);
       }));
     }
@@ -178,9 +178,9 @@ class _MainPageState extends ConsumerState<MainPage> {
             child: ElevatedButton(
               onPressed: () async {
                 if (mainState.isNotEmpty) {
-                  if(matching == false){
+                  if (matching == false) {
                     mainVm.addWaiting(myData!);
-                  }else{
+                  } else {
                     mainVm.removeWaiting(myData!);
                   }
                   setState(() {
