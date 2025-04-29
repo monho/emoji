@@ -281,7 +281,10 @@ class _LocationSelectPageState extends State<LocationSelectPage> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _fullAddress != null
-                        ? () => Navigator.pop(context, _fullAddress)
+                        ? () => Navigator.pop(context, {
+                              'fullAddress': _fullAddress,
+                              'initialPosition': [_initialPosition.latitude, _initialPosition.longitude],
+                            })
                         : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,

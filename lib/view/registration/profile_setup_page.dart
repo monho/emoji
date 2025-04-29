@@ -1,16 +1,19 @@
+import 'package:emoji/model/user/user_model.dart';
 import 'package:emoji/view/main/main_page.dart';
 import 'package:emoji/viewmodel/code/code_viewmodel.dart';
+import 'package:emoji/viewmodel/user/user_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:emoji/view/registration/location_select_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ProfileSetupPage extends StatefulWidget {
+class ProfileSetupPage extends ConsumerStatefulWidget {
   const ProfileSetupPage({super.key});
 
   @override
-  State<ProfileSetupPage> createState() => _ProfileSetupPageState();
+  ConsumerState<ProfileSetupPage> createState() => _ProfileSetupPageState();
 }
 
-class _ProfileSetupPageState extends State<ProfileSetupPage> {
+class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
   final CoreViewModel coreViewModel = CoreViewModel();
   String deviceId = '';
 
@@ -19,6 +22,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   final TextEditingController ageController = TextEditingController();
   bool isAgeValid = true;
   String? selectedLocation;
+  List<double>? latLon;
 
   @override
   void initState() {
@@ -71,6 +75,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final mainVm = ref.watch(mainViewModelProvider.notifier);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -177,9 +182,11 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                     builder: (context) => LocationSelectPage(),
                   ),
                 );
-                if (result != null && result is String) {
+
+                if (result != null && result is Map) {
                   setState(() {
-                    selectedLocation = result;
+                    selectedLocation = result['fullAddress'];
+                    latLon = result['initialPosition'];
                   });
                 }
               },
@@ -229,16 +236,17 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                               child: CircularProgressIndicator(),
                             ),
                           );
-
+                          
                           // Create user data
-                          final userData = {
-                            'nickname': nicknameController.text,
-                            'age': int.parse(ageController.text),
-                            'gender': selectedGender,
-                            'location': selectedLocation,
-                            'createdAt': DateTime.now().toIso8601String(),
-                            'uid': deviceId
-                          };
+                          mainVm.addUser(User(
+                            uid: deviceId,
+                            userName: nicknameController.text,
+                            age: int.parse(ageController.text),
+                            gender: selectedGender!,
+                            roomId: '',
+                            address: selectedLocation!,
+                            coordinates: [latLon![0], latLon![1]],
+                          ));
 
                           // TODO: Add Firebase registration logic here
                           // await FirebaseAuth.instance.createUserWithEmailAndPassword(
