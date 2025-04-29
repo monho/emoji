@@ -236,7 +236,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
                               child: CircularProgressIndicator(),
                             ),
                           );
-                          
+
                           // Create user data
                           mainVm.addUser(User(
                             uid: deviceId,
@@ -247,12 +247,6 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
                             address: selectedLocation!,
                             coordinates: [latLon![0], latLon![1]],
                           ));
-
-                          // TODO: Add Firebase registration logic here
-                          // await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                          //   email: email,
-                          //   password: password,
-                          // );
 
                           // Navigate to main page
                           Navigator.pushAndRemoveUntil(
