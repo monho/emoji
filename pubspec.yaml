@@ -34,3 +34,6 @@ flutter:
     - assets/image/
     - assets/emoji/CommentImage
     - assets/mapCore/
+    - assets/terms/term1.txt
+    - assets/terms/term2.txt
+    - assets/terms/term3.txt
