@@ -138,7 +138,7 @@ class _MainPageState extends ConsumerState<MainPage> {
               alignment: Alignment.center,
               children: [
                 ...List.generate(mainState.length, (index) {
-                  // 중심 x 186, y186 기준 (393/2 - ㅈ)
+                  // 중심 x 186, y186 기준 (393/2 - widgetSize/2)
                   double xPos = // 배율은 레이더 크기에 맞춰서 변경
                       ((myLat ?? 0) - mainState[index].coordinates[0]) * 10000 +
                           186;
