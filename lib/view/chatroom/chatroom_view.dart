@@ -5,7 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatRoomView extends ConsumerStatefulWidget {
   final String roomId;
-  const ChatRoomView({super.key, required this.roomId});
+  final String uid;
+  const ChatRoomView({super.key, required this.roomId, required this.uid});
 
   @override
   ConsumerState<ChatRoomView> createState() => _ChatRoomViewState();
@@ -132,7 +133,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
     final viewModel = ref.watch(chatViewModelProvider(widget.roomId));
     final viewModelNotifier =
         ref.read(chatViewModelProvider(widget.roomId).notifier);
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+    final currentUserId = widget.uid;
 
     WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
 
@@ -149,7 +150,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
               itemCount: viewModel.messages.length,
               itemBuilder: (context, index) {
                 final msg = viewModel.messages[index];
-                final isMe = msg.senderId == currentUserId;
+                final isMe = msg.senderId == widget.uid;
 
                 return Align(
                   alignment:
@@ -248,7 +249,7 @@ class _ChatRoomViewState extends ConsumerState<ChatRoomView> {
 
                   if (text.isNotEmpty && sticker != null) {
                     viewModelNotifier.sendMixedMessage(
-                      currentUserId,
+                      widget.uid,
                       text: text,
                       stickerUrl: sticker.background,
                     );

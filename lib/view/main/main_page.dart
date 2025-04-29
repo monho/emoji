@@ -43,7 +43,10 @@ class _MainPageState extends ConsumerState<MainPage> {
     // roomId가 있다면 채팅방으로 이동
     if (myData!.roomId != '' && myData!.isMatched == false) {
       Navigator.push(context, MaterialPageRoute(builder: (context) {
-        return ChatRoomView(roomId: myData!.roomId);
+        return ChatRoomView(
+          roomId: myData!.roomId,
+          uid: myData!.uid,
+        );
       }));
     }
     mainVm.matchingUsers(myData!);
