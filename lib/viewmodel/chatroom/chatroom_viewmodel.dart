@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:emoji/model/user/user_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:emoji/model/chatroom/chatroom_model.dart';
