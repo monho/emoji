@@ -79,16 +79,22 @@ class MainViewModel extends Notifier<List<User>?> {
       // roomId는 두 유저의 uid를 더해서 생성
       final String roomId = waitingUsers[0] + waitingUsers[1];
       // 유저1의 roomId 부여
-      collectionRef_2.doc(waitingUsers[0]).set(
-        {'roomId': roomId},
-      );
-      // 유저2의 roomId 부여
-      collectionRef_2.doc(waitingUsers[1]).set(
-        {'roomId': roomId},
-      );
-      // 대기열에서 유저1, 유저2 삭제
+      final _firestore = FirebaseFirestore.instance;
+      final _collectionRef = _firestore.collection('users');
+      final _snapshot = await _collectionRef.get();
+      final _documentSnapshot = _snapshot.docs;
+      _documentSnapshot.forEach((e) async {
+        if (roomId.contains(e.data()['uid'])) {
+          await e.reference.update({'roomId': roomId});
+        }
+      });
       collectionRef_2.doc(waitingUsers[0]).delete();
       collectionRef_2.doc(waitingUsers[1]).delete();
+      _documentSnapshot.forEach((e) async {
+        if (roomId.contains(e.data()['uid'])) {
+          await e.reference.update({'roomId': ''});
+        }
+      });
     }
   }
 }
