@@ -41,8 +41,10 @@ class _MainPageState extends ConsumerState<MainPage> {
     final myUid = await coreViewModel.getDeviceId();
     myData = await mainVm.findUserByUid(myUid);
     // roomId가 있다면 채팅방으로 이동
-    if (myData!.roomId != '' && myData!.isMatched == false) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) {
+    if (myData!.roomId != '' && myData!.isMatched == true) {
+      matchingTimer?.cancel();
+      refreshTimer?.cancel();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) {
         return ChatRoomView(
           roomId: myData!.roomId,
           uid: myData!.uid,
@@ -55,6 +57,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   @override
   void dispose() {
+    matchingTimer?.cancel();
     refreshTimer?.cancel();
     super.dispose();
   }
