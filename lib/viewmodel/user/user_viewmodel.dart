@@ -9,9 +9,7 @@ class MainViewModel extends Notifier<List<User>?> {
   }
 
   Future<void> getUser(String address) async {
-    // n초마다 유저정보 불러옴
     print('getUser');
-    await Future.delayed(Duration(seconds: 5));
     final firestore = FirebaseFirestore.instance;
     final collectionRef = firestore.collection('users');
     final snapshot = await collectionRef.get();

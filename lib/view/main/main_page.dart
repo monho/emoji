@@ -40,6 +40,8 @@ class _MainPageState extends ConsumerState<MainPage> {
     CoreViewModel coreViewModel = CoreViewModel();
     final myUid = await coreViewModel.getDeviceId();
     myData = await mainVm.findUserByUid(myUid);
+    mainVm.getUser(myData?.address ?? '');
+
     // roomId가 있다면 채팅방으로 이동
     if (myData!.roomId != '' && myData!.isMatched == true) {
       matchingTimer?.cancel();
@@ -67,8 +69,6 @@ class _MainPageState extends ConsumerState<MainPage> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final mainState = ref.watch(mainViewModelProvider);
     final mainVm = ref.read(mainViewModelProvider.notifier);
-
-    mainVm.getUser(myData?.address ?? '');
 
     final myLat = myData?.coordinates[0];
     final myLon = myData?.coordinates[1];

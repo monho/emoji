@@ -1,6 +1,7 @@
 // 필요한 패키지 불러오기
 import 'dart:async';
 import 'dart:math';
+import 'package:emoji/view/main/main_page.dart';
 import 'package:emoji/view/terms/terms_screen.dart';
 import 'package:emoji/viewmodel/code/code_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -59,7 +60,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    final deviceId = coreViewModel.getDeviceId();
     // 글자가 띠용 띠용 커졌다 줄어드는 애니메이션 설정
     _textController = AnimationController(
       vsync: this,
@@ -170,11 +170,16 @@ class _SplashScreenState extends State<SplashScreen>
       _faceController.forward();
     });
 
-    // 1초 지나면 메인 페이지로 이동
-    Timer(const Duration(milliseconds: 2300), () {
+    // n초 지나면 메인 페이지로 이동
+    Timer(const Duration(milliseconds: 2300), () async {
+      String deviceId = await coreViewModel.getDeviceId();
+      bool userExists = await coreViewModel.findUserByUid(deviceId);
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const TermsAgreementPage()),
+        MaterialPageRoute(
+            builder: (context) =>
+                userExists ? MainPage() : TermsAgreementPage()),
       );
     });
   }
@@ -203,7 +208,6 @@ class _SplashScreenState extends State<SplashScreen>
             physics: const NeverScrollableScrollPhysics(),
             itemCount: randomSequence.length,
             itemBuilder: (context, index) {
-              int emojiIndex = randomSequence[index % randomSequence.length];
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: itemSpacing / 2),
                 child: Image.asset(
