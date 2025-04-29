@@ -137,14 +137,6 @@ class _MainPageState extends ConsumerState<MainPage> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Transform.scale(
-                  scale: 2.8,
-                  child: Lottie.asset('assets/lottie/radar.json'),
-                ),
-                Transform.scale(
-                  scale: 0.3,
-                  child: Lottie.asset('assets/lottie/emoji.json'),
-                ),
                 ...List.generate(mainState.length, (index) {
                   // 중심 x 186, y186 기준 (393/2 - ㅈ)
                   double xPos = // 배율은 레이더 크기에 맞춰서 변경
@@ -175,6 +167,14 @@ class _MainPageState extends ConsumerState<MainPage> {
                     ),
                   );
                 }),
+                Transform.scale(
+                  scale: 2.8,
+                  child: Lottie.asset('assets/lottie/radar.json'),
+                ),
+                Transform.scale(
+                  scale: 0.3,
+                  child: Lottie.asset('assets/lottie/emoji.json'),
+                ),
               ],
             ),
           ),
