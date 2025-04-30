@@ -137,16 +137,8 @@ class _MainPageState extends ConsumerState<MainPage> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Transform.scale(
-                  scale: 2.8,
-                  child: Lottie.asset('assets/lottie/radar.json'),
-                ),
-                Transform.scale(
-                  scale: 0.3,
-                  child: Lottie.asset('assets/lottie/emoji.json'),
-                ),
-                ...List.generate(mainState.length, (index) {
-                  // 중심 x 186, y186 기준 (393/2 - ㅈ)
+                ...List.generate(mainState.length, (index) {//
+                  // 중심 x 186, y186 기준 (393/2 - widgetSize/2)
                   double xPos = // 배율은 레이더 크기에 맞춰서 변경
                       ((myLat ?? 0) - mainState[index].coordinates[0]) * 10000 +
                           186;
@@ -175,13 +167,21 @@ class _MainPageState extends ConsumerState<MainPage> {
                     ),
                   );
                 }),
+                Transform.scale(
+                  scale: 2.8,
+                  child: Lottie.asset('assets/lottie/radar.json'),
+                ),
+                Transform.scale(
+                  scale: 0.3,
+                  child: Lottie.asset('assets/lottie/emoji.json'),
+                ),
               ],
             ),
           ),
           Spacer(),
           Padding(
             padding: EdgeInsets.fromLTRB(20, 0, 20, bottomPadding + 50),
-            child: ElevatedButton(
+            child: ElevatedButton(//
               onPressed: () async {
                 if (mainState.isNotEmpty) {
                   if (matching == false) {
